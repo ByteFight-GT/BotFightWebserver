@@ -1,6 +1,7 @@
 package com.example.botfightwebserver.player;
 
 import com.example.botfightwebserver.submission.Submission;
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +36,7 @@ public class Player {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    @Email
     private String email;
     @CreationTimestamp
     private LocalDateTime creationDateTime;
@@ -49,12 +53,13 @@ public class Player {
     @Builder.Default
     private Integer numberDraws=0;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name="current_submission_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name="current_submission_id", nullable = true)
     private Submission currentSubmission;
 
     @PrePersist
-    private void onCreate() {
+    @VisibleForTesting
+    public void onCreate() {
         creationDateTime = LocalDateTime.now();
         lastModifiedDate = LocalDateTime.now();
     }

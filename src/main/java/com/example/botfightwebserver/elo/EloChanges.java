@@ -1,4 +1,4 @@
-package com.example.botfightwebserver.Elo;
+package com.example.botfightwebserver.elo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

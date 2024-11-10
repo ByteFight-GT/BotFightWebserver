@@ -1,7 +1,6 @@
 package com.example.botfightwebserver.player;
 
-import com.example.botfightwebserver.Elo.EloCalculator;
-import com.example.botfightwebserver.submission.Submission;
+import com.example.botfightwebserver.elo.EloCalculator;
 import com.example.botfightwebserver.submission.SubmissionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

@@ -1,14 +1,9 @@
 package com.example.botfightwebserver.gameMatch;
 
-import com.example.botfightwebserver.Elo.EloCalculator;
-import com.example.botfightwebserver.Elo.EloChanges;
-import com.example.botfightwebserver.gameMatchLogs.GameMatchLog;
+import com.example.botfightwebserver.elo.EloCalculator;
 import com.example.botfightwebserver.gameMatchLogs.GameMatchLogService;
-import com.example.botfightwebserver.player.PlayerDTO;
 import com.example.botfightwebserver.player.PlayerService;
 import com.example.botfightwebserver.rabbitMQ.RabbitMQService;
-import com.example.botfightwebserver.submission.Submission;
-import com.example.botfightwebserver.submission.SubmissionDTO;
 import com.example.botfightwebserver.submission.SubmissionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

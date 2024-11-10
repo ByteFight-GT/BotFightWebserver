@@ -1,9 +1,7 @@
-package com.example.botfightwebserver.Elo;
+package com.example.botfightwebserver.elo;
 
 import com.example.botfightwebserver.gameMatch.MATCH_STATUS;
-import com.example.botfightwebserver.player.Player;
 import com.example.botfightwebserver.player.PlayerDTO;
-import com.example.botfightwebserver.player.PlayerRepository;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -36,7 +36,6 @@ public class SubmissionService {
         String filePathString = storageService.uploadFile(playerId, file);
 
         Submission submission = new Submission();
-        submission.setPlayer(player);
         submission.setStoragePath(filePathString);
         submission.setSubmissionValidity(SUBMISSION_VALIDITY.NOT_EVALUATED);
 

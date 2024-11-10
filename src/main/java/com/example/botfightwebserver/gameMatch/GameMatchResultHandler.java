@@ -1,7 +1,7 @@
 package com.example.botfightwebserver.gameMatch;
 
-import com.example.botfightwebserver.Elo.EloCalculator;
-import com.example.botfightwebserver.Elo.EloChanges;
+import com.example.botfightwebserver.elo.EloCalculator;
+import com.example.botfightwebserver.elo.EloChanges;
 import com.example.botfightwebserver.gameMatchLogs.GameMatchLogService;
 import com.example.botfightwebserver.player.PlayerDTO;
 import com.example.botfightwebserver.player.PlayerService;
