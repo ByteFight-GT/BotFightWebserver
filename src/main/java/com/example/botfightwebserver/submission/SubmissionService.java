@@ -38,7 +38,7 @@ public class SubmissionService {
         Submission submission = new Submission();
         submission.setStoragePath(filePathString);
         submission.setSubmissionValidity(SUBMISSION_VALIDITY.NOT_EVALUATED);
-
+        submission.setPlayerId(playerId);
         // Can be optimized if we create the DTO just using the playerID
         return SubmissionDTO.fromEntity(submissionRepository.save(submission));
     }

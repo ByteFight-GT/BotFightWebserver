@@ -56,6 +56,8 @@ public class GameMatch {
     private LocalDateTime createdAt;
     private LocalDateTime processedAt;
 
+    private String map;
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();

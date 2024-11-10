@@ -6,7 +6,7 @@ public record SubmissionDTO(Long id, Long playerId, SUBMISSION_VALIDITY validity
     public static SubmissionDTO fromEntity(Submission submission) {
         return new SubmissionDTO(
             submission.getId(),
-            submission.getPlayer().getId(),
+            submission.getPlayerId(),
             submission.getSubmissionValidity(),
             submission.getCreatedAt()
         );

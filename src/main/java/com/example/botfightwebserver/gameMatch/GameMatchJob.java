@@ -17,7 +17,7 @@ public record GameMatchJob(Long gameMatchId, String Submission1Path, String Subm
             submission2.getStoragePath(),
             submission1.getSource(),
             submission2.getSource(),
-            "DEFAULT_MAP"
+            gameMatch.getMap()
         );
     }
 }

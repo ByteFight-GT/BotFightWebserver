@@ -27,7 +27,7 @@ public class GameMatchService {
         return gameMatchRepository.findAll();
     }
 
-    public GameMatch createMatch(Long player1Id, Long player2Id, Long submission1Id, Long submission2Id, MATCH_REASON reason) {
+    public GameMatch createMatch(Long player1Id, Long player2Id, Long submission1Id, Long submission2Id, MATCH_REASON reason, String map) {
         playerService.validatePlayers(player1Id, player2Id);
         submissionService.validateSubmissions(submission1Id, submission2Id);
         GameMatch gameMatch = new GameMatch();
@@ -37,11 +37,12 @@ public class GameMatchService {
         gameMatch.setSubmissionTwo(submissionService.getSubmissionReferenceById(submission2Id));
         gameMatch.setStatus(MATCH_STATUS.WAITING);
         gameMatch.setReason(reason);
+        gameMatch.setMap(map);
         return gameMatchRepository.save(gameMatch);
     }
 
-    public GameMatchJob submitGameMatch(Long player1Id, Long player2Id, Long submission1Id, Long submission2Id, MATCH_REASON reason) {
-        GameMatch match = createMatch(player1Id, player2Id, submission1Id, submission2Id, reason);
+    public GameMatchJob submitGameMatch(Long player1Id, Long player2Id, Long submission1Id, Long submission2Id, MATCH_REASON reason, String map) {
+        GameMatch match = createMatch(player1Id, player2Id, submission1Id, submission2Id, reason, map);
         GameMatchJob job = GameMatchJob.fromEntity(match);
         rabbitMQService.enqueueGameMatchJob(job);
         return job;

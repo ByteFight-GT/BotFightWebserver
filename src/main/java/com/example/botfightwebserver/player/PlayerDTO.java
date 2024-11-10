@@ -38,7 +38,7 @@ public class PlayerDTO {
             .numberWins(player.getNumberWins())
             .numberLosses(player.getNumberLosses())
             .numberDraws(player.getNumberDraws())
-            .currentSubmissionDTO(SubmissionDTO.fromEntity(player.getCurrentSubmission()))
+            .currentSubmissionDTO(player.getCurrentSubmission() != null? SubmissionDTO.fromEntity(player.getCurrentSubmission()): null)
             .build();
     }
 }

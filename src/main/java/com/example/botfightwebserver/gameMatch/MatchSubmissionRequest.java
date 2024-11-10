@@ -9,4 +9,5 @@ public class MatchSubmissionRequest {
     private Long submission1Id;
     private Long submission2Id;
     private MATCH_REASON reason;
+    private String map;
 }

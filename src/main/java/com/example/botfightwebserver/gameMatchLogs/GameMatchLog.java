@@ -18,9 +18,7 @@ public class GameMatchLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "game_match_id", nullable = false)
-    private GameMatch gameMatch;
+    private Long matchId;
 
     private String matchLog;
 }
