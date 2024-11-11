@@ -2,15 +2,13 @@ package com.example.botfightwebserver.submission;
 
 import com.example.botfightwebserver.player.Player;
 import com.example.botfightwebserver.player.PlayerRepository;
-import com.example.botfightwebserver.storage.MockStorageServiceImpl;
 import com.example.botfightwebserver.storage.StorageService;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -75,5 +73,13 @@ public class SubmissionService {
         Submission submission = submissionRepository.findById(submissionId).get();
         submission.setSubmissionValidity(SUBMISSION_VALIDITY.VALID);
         submissionRepository.save(submission);
+    }
+
+    public boolean isSubmissionValid(Long submissionId) {
+        Optional<Submission> maybeSubmission = submissionRepository.findById(submissionId);
+        if (maybeSubmission.isPresent()) {
+            return maybeSubmission.get().getSubmissionValidity() == SUBMISSION_VALIDITY.VALID;
+        }
+        return false;
     }
 }

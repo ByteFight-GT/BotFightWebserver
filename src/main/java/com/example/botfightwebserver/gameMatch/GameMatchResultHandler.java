@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @AllArgsConstructor
 @Service
 @Slf4j
@@ -78,7 +80,9 @@ public class GameMatchResultHandler {
 
     private  void handleValidationResult(PlayerDTO playerDTO, SubmissionDTO submissionDTO) {
         submissionService.validateSubmissionAfterMatch(submissionDTO.id());
-        playerService.setCurrentSubmissionIfNone(playerDTO.getId(), submissionDTO.id());
+        if (playerService.getCurrentSubmission(playerDTO.getId()).isEmpty()) {
+            playerService.setCurrentSubmission(playerDTO.getId(), submissionDTO.id());
+        }
     }
 
 }

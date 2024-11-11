@@ -1,12 +1,14 @@
 package com.example.botfightwebserver.player;
 
 import com.example.botfightwebserver.elo.EloCalculator;
+import com.example.botfightwebserver.submission.Submission;
 import com.example.botfightwebserver.submission.SubmissionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,6 +72,19 @@ public class PlayerService {
             player.setNumberDraws(player.getNumberDraws() + 1);
         }
         return PlayerDTO.fromEntity(playerRepository.save(player));
+    }
+
+    public void setCurrentSubmission(Long playerId, Long submissionId) {
+        if (!submissionService.isSubmissionValid(submissionId)) {
+            throw new IllegalArgumentException("Submission is not valid");
+        }
+        Player player = playerRepository.findById(playerId).get();
+        player.setCurrentSubmission(submissionService.getSubmissionReferenceById(submissionId));
+    }
+
+    public Optional<Submission> getCurrentSubmission(Long playerId) {
+        Player player = playerRepository.findById(playerId).get();
+        return Optional.of(player.getCurrentSubmission());
     }
 
     public boolean setCurrentSubmissionIfNone(Long playerId, Long submissionId) {
