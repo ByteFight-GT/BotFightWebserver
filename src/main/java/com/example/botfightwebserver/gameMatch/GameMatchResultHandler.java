@@ -9,10 +9,12 @@ import com.example.botfightwebserver.rabbitMQ.RabbitMQService;
 import com.example.botfightwebserver.submission.SubmissionDTO;
 import com.example.botfightwebserver.submission.SubmissionService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class GameMatchResultHandler {
 
     private final GameMatchService gameMatchService;
@@ -25,26 +27,42 @@ public class GameMatchResultHandler {
 
     public void handleGameMatchResult(GameMatchResult result) {
         long gameMatchId = result.matchId();
+        if (!gameMatchService.isGameMatchIdExist(gameMatchId)) {
+            log.warn("Game match id " + gameMatchId + " does not exist");
+            return;
+        }
+        if (!gameMatchService.isGameMatchWaiting(gameMatchId)) {
+            log.info("Game match is already played");
+            return;
+        }
         MATCH_STATUS status = result.status();
         GameMatchDTO gameMatchDTO = gameMatchService.getDTOById(gameMatchId);
         PlayerDTO player1DTO = gameMatchDTO.getPlayerOne();
         PlayerDTO player2DTO = gameMatchDTO.getPlayerTwo();
 
+        log.info("Processing match result for game {}: {} vs {}, status: {}",
+            gameMatchId, player1DTO.getName(), player2DTO.getName(), status);
+
+        EloChanges eloChanges = new EloChanges();
         if (gameMatchDTO.getReason() == MATCH_REASON.LADDER) {
-            handleLadderResult(player1DTO, player2DTO, status);
+            eloChanges = eloCalculator.calculateElo(player1DTO, player2DTO, status);
+            log.debug("Handling ladder match: player1 {}, player2 {}", player1DTO.getId(), player2DTO.getId());
+            handleLadderResult(player1DTO, player2DTO, status, eloChanges);
+            log.info("Ladder match handled");
         } else if (gameMatchDTO.getReason() == MATCH_REASON.VALIDATION) {
             SubmissionDTO submission1DTO = gameMatchDTO.getSubmissionOne();
+            log.info("Processing validation match for player {}", player1DTO.getName());
             handleValidationResult(player1DTO, submission1DTO);
+            log.info("Validation match handled");
         }
         gameMatchService.setGameMatchStatus(gameMatchId, status);
-        gameMatchLogService.createGameMatchLog(gameMatchId, result.matchLog());
+        gameMatchLogService.createGameMatchLog(gameMatchId, result.matchLog(), eloChanges.getPlayer1Change(), eloChanges.getPlayer2Change());
     }
 
 
 
-    private void handleLadderResult(PlayerDTO player1DTO, PlayerDTO player2DTO, MATCH_STATUS status) {
+    private void handleLadderResult(PlayerDTO player1DTO, PlayerDTO player2DTO, MATCH_STATUS status, EloChanges eloChanges) {
         // make this cleaner
-        EloChanges eloChanges = eloCalculator.calculateElo(player1DTO, player2DTO, status);
         if (status == MATCH_STATUS.PLAYER_ONE_WIN) {
             playerService.updatePlayerAfterLadderMatch(player1DTO, eloChanges.getPlayer1Change(), true, false);
             playerService.updatePlayerAfterLadderMatch(player2DTO, eloChanges.getPlayer2Change(), false, false);
@@ -55,6 +73,7 @@ public class GameMatchResultHandler {
             playerService.updatePlayerAfterLadderMatch(player1DTO, eloChanges.getPlayer1Change(), false, true);
             playerService.updatePlayerAfterLadderMatch(player2DTO, eloChanges.getPlayer2Change(), false, true);
         }
+
     }
 
     private  void handleValidationResult(PlayerDTO playerDTO, SubmissionDTO submissionDTO) {

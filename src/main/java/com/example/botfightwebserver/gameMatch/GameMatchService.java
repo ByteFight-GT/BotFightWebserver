@@ -54,6 +54,11 @@ public class GameMatchService {
         gameMatchRepository.save(gameMatch);
     }
 
+    //only to be used for testing
+    public void submitGameMatchResults(GameMatchResult result) {
+        rabbitMQService.enqueueGameMatchResult(result);
+    }
+
     public GameMatchDTO getDTOById(Long id) {
         return GameMatchDTO.fromEntity(gameMatchRepository.getReferenceById(id));
     }
@@ -62,6 +67,13 @@ public class GameMatchService {
         return gameMatchRepository.getReferenceById(id);
     }
 
+    public boolean isGameMatchIdExist(Long id) {
+        return gameMatchRepository.existsById(id);
+    }
+
+    public boolean isGameMatchWaiting(Long id) {
+        return gameMatchRepository.findById(id).get().getStatus() == MATCH_STATUS.WAITING;
+    }
     }
 
 

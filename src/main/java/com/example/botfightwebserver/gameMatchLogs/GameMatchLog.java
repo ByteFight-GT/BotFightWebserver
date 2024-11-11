@@ -21,4 +21,8 @@ public class GameMatchLog {
     private Long matchId;
 
     private String matchLog;
+
+    private Double player1EloChange;
+
+    private Double player2EloChange;
 }

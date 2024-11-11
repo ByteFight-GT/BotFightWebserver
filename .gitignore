@@ -39,3 +39,4 @@ out/
 .env
 GcpKey/
 **/.DS_Store
+/logs
