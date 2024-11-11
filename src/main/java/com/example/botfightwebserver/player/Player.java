@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,14 +34,14 @@ import java.time.LocalDateTime;
 @Builder
 public class Player {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
     @Email
     private String email;
     @CreationTimestamp
     private LocalDateTime creationDateTime;
-    @LastModifiedBy
+    @LastModifiedDate
     private LocalDateTime lastModifiedDate;
     @Builder.Default
     private Double elo=1200.0;

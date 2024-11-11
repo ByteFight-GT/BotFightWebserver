@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor @Getter @Setter
 public class Submission {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private String storagePath;

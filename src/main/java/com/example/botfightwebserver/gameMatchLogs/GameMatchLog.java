@@ -15,7 +15,7 @@ import lombok.Setter;
 @Getter @Setter
 public class GameMatchLog {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private Long matchId;
