@@ -53,6 +53,8 @@ public class Submission {
 
     public void setSubmissionValidity(SUBMISSION_VALIDITY submissionValidity) {
         this.submissionValidity = submissionValidity;
-        validateAt = LocalDateTime.now();
+        if (submissionValidity == SUBMISSION_VALIDITY.VALID) {
+            validateAt = LocalDateTime.now();
+        }
     }
 }
