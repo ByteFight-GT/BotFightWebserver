@@ -12,13 +12,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @DataJpaTest
 @AutoConfigureTestDatabase
@@ -92,4 +103,378 @@ class PlayerServiceTest extends PersistentTestBase {
         assertEquals(2, player2DTO.getNumberLosses());
         assertEquals(0, player2DTO.getNumberDraws());
     }
+
+    @Test
+    void testGetPlayers_none() {
+        List<PlayerDTO> players = playerService.getPlayers();
+        assertEquals(0, players.size());
+    }
+
+    @Test
+    void testGetPlayerReferenceById() {
+        Player expectedPlayer = Player.builder()
+            .elo(1200.0)
+            .email("test@example.com")
+            .name("Test Player")
+            .matchesPlayed(0)
+            .numberWins(0)
+            .numberLosses(0)
+            .numberDraws(0)
+            .build();
+
+        Player persistedPlayer = persistAndReturnEntity(expectedPlayer);
+        Player retrievedPlayer = playerService.getPlayerReferenceById(persistedPlayer.getId());
+
+        assertEquals(persistedPlayer.getId(), retrievedPlayer.getId());
+        assertEquals(expectedPlayer.getEmail(), retrievedPlayer.getEmail());
+        assertEquals(expectedPlayer.getName(), retrievedPlayer.getName());
+        assertEquals(expectedPlayer.getElo(), retrievedPlayer.getElo());
+        assertEquals(expectedPlayer.getMatchesPlayed(), retrievedPlayer.getMatchesPlayed());
+        assertEquals(expectedPlayer.getNumberWins(), retrievedPlayer.getNumberWins());
+        assertEquals(expectedPlayer.getNumberLosses(), retrievedPlayer.getNumberLosses());
+        assertEquals(expectedPlayer.getNumberDraws(), retrievedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testGetDTOById() {
+        Submission submission = persistAndReturnEntity(new Submission());
+
+        Player expectedPlayer = Player.builder()
+            .currentSubmission(submission)
+            .elo(1200.0)
+            .email("test@example.com")
+            .name("Test Player")
+            .matchesPlayed(5)
+            .numberWins(3)
+            .numberLosses(1)
+            .numberDraws(1)
+            .build();
+
+        Player persistedPlayer = persistAndReturnEntity(expectedPlayer);
+
+        PlayerDTO playerDTO = playerService.getDTOById(persistedPlayer.getId());
+
+        assertEquals(persistedPlayer.getId(), playerDTO.getId());
+        assertEquals(expectedPlayer.getEmail(), playerDTO.getEmail());
+        assertEquals(expectedPlayer.getName(), playerDTO.getName());
+        assertEquals(expectedPlayer.getElo(), playerDTO.getElo());
+        assertEquals(expectedPlayer.getMatchesPlayed(), playerDTO.getMatchesPlayed());
+        assertEquals(expectedPlayer.getNumberWins(), playerDTO.getNumberWins());
+        assertEquals(expectedPlayer.getNumberLosses(), playerDTO.getNumberLosses());
+        assertEquals(expectedPlayer.getNumberDraws(), playerDTO.getNumberDraws());
+        assertEquals(submission.getId(), playerDTO.getCurrentSubmissionDTO().id());
+    }
+
+    @Test
+    void testGetDTOById_WithNullSubmission() {
+        Player expectedPlayer = Player.builder()
+            .currentSubmission(null)
+            .elo(1200.0)
+            .email("test@example.com")
+            .name("Test Player")
+            .matchesPlayed(0)
+            .numberWins(0)
+            .numberLosses(0)
+            .numberDraws(0)
+            .build();
+
+        Player persistedPlayer = persistAndReturnEntity(expectedPlayer);
+
+        PlayerDTO playerDTO = playerService.getDTOById(persistedPlayer.getId());
+
+        assertEquals(persistedPlayer.getId(), playerDTO.getId());
+        assertEquals(expectedPlayer.getEmail(), playerDTO.getEmail());
+        assertEquals(expectedPlayer.getName(), playerDTO.getName());
+        assertEquals(expectedPlayer.getElo(), playerDTO.getElo());
+        assertEquals(expectedPlayer.getMatchesPlayed(), playerDTO.getMatchesPlayed());
+        assertEquals(expectedPlayer.getNumberWins(), playerDTO.getNumberWins());
+        assertEquals(expectedPlayer.getNumberLosses(), playerDTO.getNumberLosses());
+        assertEquals(expectedPlayer.getNumberDraws(), playerDTO.getNumberDraws());
+        assertEquals(null, playerDTO.getCurrentSubmissionDTO());
+    }
+
+    @Test
+    void testCreatePlayer_Success() {
+        String name = "New Player";
+        String email = "newplayer@example.com";
+
+        PlayerDTO createdPlayer = playerService.createPlayer(name, email);
+
+        Player persistedPlayer = playerRepository.findById(createdPlayer.getId()).orElseThrow();
+        assertEquals(name, persistedPlayer.getName());
+        assertEquals(email, persistedPlayer.getEmail());
+        assertEquals(0, persistedPlayer.getMatchesPlayed());
+        assertEquals(0, persistedPlayer.getNumberWins());
+        assertEquals(0, persistedPlayer.getNumberLosses());
+        assertEquals(0, persistedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testCreatePlayer_DuplicateEmail() {
+        String name1 = "First Player";
+        String email = "same@example.com";
+        playerService.createPlayer(name1, email);
+
+        String name2 = "Second Player";
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> playerService.createPlayer(name2, email)
+        );
+
+        assertEquals("Player with email " + email + " already exists", exception.getMessage());
+        assertEquals(1, playerRepository.count());
+    }
+
+
+    @Test
+    void testValidatePlayers_Success() {
+        Player player1 = persistAndReturnEntity(Player.builder()
+            .name("Player 1")
+            .email("player1@example.com")
+            .build());
+
+        Player player2 = persistAndReturnEntity(Player.builder()
+            .name("Player 2")
+            .email("player2@example.com")
+            .build());
+
+        assertDoesNotThrow(() ->
+            playerService.validatePlayers(player1.getId(), player2.getId())
+        );
+    }
+
+    @Test
+    void testValidatePlayers_SamePlayer() {
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Player 1")
+            .email("player1@example.com")
+            .build());
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> playerService.validatePlayers(player.getId(), player.getId())
+        );
+
+        assertEquals("Players must be different", exception.getMessage());
+    }
+
+    @Test
+    void testValidatePlayers_PlayerDoesNotExist() {
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Player 1")
+            .email("player1@example.com")
+            .build());
+
+        Long nonExistentId = 99999L;
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> playerService.validatePlayers(nonExistentId, player.getId())
+        );
+
+        assertEquals("One or both players do not exist", exception.getMessage());
+    }
+
+
+    @Test
+    void testValidatePlayers_NullIds() {
+        assertThrows(IllegalArgumentException.class,
+            () -> playerService.validatePlayers(null, 1L));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> playerService.validatePlayers(1L, null));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> playerService.validatePlayers(null, null));
+    }
+
+    @Test
+    void testUpdatePlayerAfterLadderMatch_Win() {
+        Player initialPlayer = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .elo(1200.0)
+            .matchesPlayed(5)
+            .numberWins(2)
+            .numberLosses(2)
+            .numberDraws(1)
+            .build());
+
+        PlayerDTO initialDTO = PlayerDTO.fromEntity(initialPlayer);
+        double eloChange = 15.0;
+
+        PlayerDTO updatedDTO = playerService.updatePlayerAfterLadderMatch(initialDTO, eloChange, true, false);
+
+        Player persistedPlayer = playerRepository.findById(updatedDTO.getId()).get();
+        assertEquals(1215.0, persistedPlayer.getElo());
+        assertEquals(6, persistedPlayer.getMatchesPlayed());
+        assertEquals(3, persistedPlayer.getNumberWins());
+        assertEquals(2, persistedPlayer.getNumberLosses());
+        assertEquals(1, persistedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testUpdatePlayerAfterLadderMatch_Loss() {
+        Player initialPlayer = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .elo(1200.0)
+            .matchesPlayed(5)
+            .numberWins(2)
+            .numberLosses(2)
+            .numberDraws(1)
+            .build());
+
+        PlayerDTO initialDTO = PlayerDTO.fromEntity(initialPlayer);
+        double eloChange = -15.0;
+
+        PlayerDTO updatedDTO = playerService.updatePlayerAfterLadderMatch(initialDTO, eloChange, false, false);
+
+        assertEquals(1185.0, updatedDTO.getElo()); // 1200 - 15
+        assertEquals(6, updatedDTO.getMatchesPlayed());
+        assertEquals(2, updatedDTO.getNumberWins()); // unchanged
+        assertEquals(3, updatedDTO.getNumberLosses()); // 2 + 1
+        assertEquals(1, updatedDTO.getNumberDraws()); // unchanged
+
+        Player persistedPlayer = playerRepository.findById(updatedDTO.getId()).get();
+        assertEquals(1185.0, persistedPlayer.getElo());
+        assertEquals(6, persistedPlayer.getMatchesPlayed());
+        assertEquals(2, persistedPlayer.getNumberWins());
+        assertEquals(3, persistedPlayer.getNumberLosses());
+        assertEquals(1, persistedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testUpdatePlayerAfterLadderMatch_Draw() {
+        Player initialPlayer = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .elo(1200.0)
+            .matchesPlayed(5)
+            .numberWins(2)
+            .numberLosses(2)
+            .numberDraws(1)
+            .build());
+
+        PlayerDTO initialDTO = PlayerDTO.fromEntity(initialPlayer);
+        double eloChange = 0.0;
+
+        PlayerDTO updatedDTO = playerService.updatePlayerAfterLadderMatch(initialDTO, eloChange, false, true);
+
+        Player persistedPlayer = playerRepository.findById(updatedDTO.getId()).get();
+        assertEquals(1200.0, persistedPlayer.getElo());
+        assertEquals(6, persistedPlayer.getMatchesPlayed());
+        assertEquals(2, persistedPlayer.getNumberWins());
+        assertEquals(2, persistedPlayer.getNumberLosses());
+        assertEquals(2, persistedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testUpdatePlayerAfterLadderMatch_InvalidWinAndDraw() {
+        Player initialPlayer = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .elo(1200.0)
+            .matchesPlayed(5)
+            .numberWins(2)
+            .numberLosses(2)
+            .numberDraws(1)
+            .build());
+
+        PlayerDTO initialDTO = PlayerDTO.fromEntity(initialPlayer);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> playerService.updatePlayerAfterLadderMatch(initialDTO, 15.0, true, true)
+        );
+
+        assertEquals("Result can't be a win and a draw", exception.getMessage());
+
+        Player unchangedPlayer = playerRepository.findById(initialDTO.getId()).get();
+        assertEquals(1200.0, unchangedPlayer.getElo());
+        assertEquals(5, unchangedPlayer.getMatchesPlayed());
+        assertEquals(2, unchangedPlayer.getNumberWins());
+        assertEquals(2, unchangedPlayer.getNumberLosses());
+        assertEquals(1, unchangedPlayer.getNumberDraws());
+    }
+
+    @Test
+    void testSetCurrentSubmission_Success() {
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .build());
+
+        Long submissionId = 1L;
+        Submission mockSubmission = new Submission();
+        mockSubmission.setId(submissionId);
+
+        when(submissionService.isSubmissionValid(submissionId)).thenReturn(true);
+        when(submissionService.getSubmissionReferenceById(submissionId)).thenReturn(mockSubmission);
+
+        assertDoesNotThrow(() ->
+            playerService.setCurrentSubmission(player.getId(), submissionId)
+        );
+
+        Player updatedPlayer = playerRepository.findById(player.getId()).get();
+        assertEquals(submissionId, updatedPlayer.getCurrentSubmission().getId());
+
+        verify(submissionService).isSubmissionValid(submissionId);
+        verify(submissionService).getSubmissionReferenceById(submissionId);
+    }
+
+    @Test
+    void testSetCurrentSubmission_InvalidSubmission() {
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .build());
+
+        Long submissionId = 1L;
+
+        when(submissionService.isSubmissionValid(submissionId)).thenReturn(false);
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> playerService.setCurrentSubmission(player.getId(), submissionId)
+        );
+
+        assertEquals("Submission is not valid", exception.getMessage());
+
+        Player unchangedPlayer = playerRepository.findById(player.getId()).get();
+        assertNull(unchangedPlayer.getCurrentSubmission());
+
+        verify(submissionService).isSubmissionValid(submissionId);
+        verify(submissionService, never()).getSubmissionReferenceById(any());
+    }
+
+    @Test
+    void testGetCurrentSubmission_WithSubmission() {
+        Submission submission = persistAndReturnEntity(new Submission());
+
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .currentSubmission(submission)
+            .build());
+
+        Optional<Submission> result = playerService.getCurrentSubmission(player.getId());
+
+        assertTrue(result.isPresent());
+        assertEquals(submission.getId(), result.get().getId());
+    }
+
+    @Test
+    void testGetCurrentSubmission_NoSubmission() {
+        Player player = persistAndReturnEntity(Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .currentSubmission(null)
+            .build());
+
+        Optional<Submission> result = playerService.getCurrentSubmission(player.getId());
+
+        assertFalse(result.isPresent());
+    }
+
 }

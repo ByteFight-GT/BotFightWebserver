@@ -46,6 +46,9 @@ public class PlayerService {
     }
 
     public void validatePlayers(Long player1Id, Long player2Id) {
+        if (player1Id == null || player2Id == null) {
+            throw new IllegalArgumentException("PlayerIds cannot be null");
+        }
         if (!playerRepository.existsById(player1Id) || !playerRepository.existsById(player2Id)) {
             throw new IllegalArgumentException("One or both players do not exist");
         }
@@ -82,8 +85,9 @@ public class PlayerService {
     }
 
     public Optional<Submission> getCurrentSubmission(Long playerId) {
-        Player player = playerRepository.findById(playerId).get();
-        return Optional.of(player.getCurrentSubmission());
+        Optional<Submission> submission = playerRepository.findById(playerId)
+            .map(Player::getCurrentSubmission);
+        return submission;
     }
 
     public boolean setCurrentSubmissionIfNone(Long playerId, Long submissionId) {
