@@ -1,5 +1,6 @@
 package com.example.botfightwebserver.player;
 
+import com.example.botfightwebserver.PostgresIntegrationTest;
 import com.example.botfightwebserver.submission.Submission;
 import org.junit.jupiter.api.Test;
 

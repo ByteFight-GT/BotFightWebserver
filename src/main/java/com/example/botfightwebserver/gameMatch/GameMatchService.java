@@ -1,6 +1,5 @@
 package com.example.botfightwebserver.gameMatch;
 
-import com.example.botfightwebserver.elo.EloCalculator;
 import com.example.botfightwebserver.gameMatchLogs.GameMatchLogService;
 import com.example.botfightwebserver.player.PlayerService;
 import com.example.botfightwebserver.rabbitMQ.RabbitMQService;
@@ -20,7 +19,6 @@ public class GameMatchService {
     private final PlayerService playerService;
     private final SubmissionService submissionService;
     private final RabbitMQService rabbitMQService;
-    private final EloCalculator eloCalculator;
     private final GameMatchLogService gameMatchLogService;
 
     public List<GameMatch> getGameMatches() {

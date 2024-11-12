@@ -16,6 +16,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
 @AutoConfigureTestDatabase
@@ -33,12 +36,9 @@ class PlayerServiceTest extends PersistentTestBase {
 
     private PlayerService playerService;
 
-    private final LocalDateTime NOW = LocalDateTime.of(2006, 1, 2, 15, 30, 45);
-    private final LocalDateTime LATER = LocalDateTime.of(2006, 2, 1, 15, 30, 45);
-
     @BeforeEach
     void setUp() {
-        playerService = new PlayerService(playerRepository, eloCalculator, submissionService);
+        playerService = new PlayerService(playerRepository, submissionService);
     }
 
     @Test
@@ -51,8 +51,6 @@ class PlayerServiceTest extends PersistentTestBase {
             .elo(1200.0)
             .email("tkwok123@gmail.com")
             .name("Tyler")
-            .creationDateTime(NOW)
-            .lastModifiedDate(LATER)
             .matchesPlayed(10)
             .numberWins(5)
             .numberLosses(3)
@@ -61,19 +59,37 @@ class PlayerServiceTest extends PersistentTestBase {
 
         Player player2 = Player.builder()
             .currentSubmission(submission2)
-            .elo(1200.0)
+            .elo(1400.0)
             .email("bkwok123@gmail.com")
             .name("Ben")
-            .creationDateTime(NOW)
-            .lastModifiedDate(LATER)
-            .matchesPlayed(10)
-            .numberWins(5)
-            .numberLosses(3)
-            .numberDraws(2)
+            .matchesPlayed(5)
+            .numberWins(3)
+            .numberLosses(2)
+            .numberDraws(0)
             .build();
 
         persistEntity(player1);
         persistEntity(player2);
-        System.out.println(playerService.getPlayers());
+        List<PlayerDTO> players = playerService.getPlayers();
+        PlayerDTO player1DTO = players.get(0);
+        PlayerDTO player2DTO = players.get(1);
+
+        assertEquals(submission1.getId(), player1DTO.getCurrentSubmissionDTO().id());
+        assertEquals(1200.0, player1DTO.getElo());
+        assertEquals("Tyler", player1DTO.getName());
+        assertEquals("tkwok123@gmail.com", player1DTO.getEmail());
+        assertEquals(10, player1DTO.getMatchesPlayed());
+        assertEquals(3, player1DTO.getNumberLosses());
+        assertEquals(2, player1DTO.getNumberDraws());
+        assertEquals(5, player1DTO.getNumberWins());
+
+        assertEquals(submission2.getId(), player2DTO.getCurrentSubmissionDTO().id());
+        assertEquals(1400.0, player2DTO.getElo());
+        assertEquals("Ben", player2DTO.getName());
+        assertEquals("bkwok123@gmail.com", player2DTO.getEmail());
+        assertEquals(5, player2DTO.getMatchesPlayed());
+        assertEquals(3, player2DTO.getNumberWins());
+        assertEquals(2, player2DTO.getNumberLosses());
+        assertEquals(0, player2DTO.getNumberDraws());
     }
 }

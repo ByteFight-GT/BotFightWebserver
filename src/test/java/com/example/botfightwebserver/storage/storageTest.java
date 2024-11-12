@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class storageTest {
 
+    // This is a bad test. Ignore until we figure out where to put it.
     @Test
     void testStorageAccess() {
         // Arrange

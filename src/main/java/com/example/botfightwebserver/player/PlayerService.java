@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
-    private final EloCalculator eloCalculator;
     private final SubmissionService submissionService;
 
     public List<PlayerDTO> getPlayers() {
