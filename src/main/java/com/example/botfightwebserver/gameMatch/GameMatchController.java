@@ -53,7 +53,7 @@ public class GameMatchController {
 
     @GetMapping("/queued")
     public ResponseEntity<List<GameMatchJob>> queued() {
-        return ResponseEntity.ok(gameMatchService.peekGameMatchQueue());
+        return ResponseEntity.ok(gameMatchService.peekQueuedMatches());
     }
 
 }
