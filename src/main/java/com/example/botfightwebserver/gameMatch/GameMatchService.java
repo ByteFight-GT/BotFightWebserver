@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -49,6 +50,9 @@ public class GameMatchService {
     public void setGameMatchStatus(Long gameMatchId, MATCH_STATUS status) {
         GameMatch gameMatch = gameMatchRepository.findById(gameMatchId).get();
         gameMatch.setStatus(status);
+        if (!MATCH_STATUS.WAITING.equals(gameMatch.getStatus())) {
+            gameMatch.setProcessedAt(LocalDateTime.now());
+        }
         gameMatchRepository.save(gameMatch);
     }
 

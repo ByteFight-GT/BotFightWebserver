@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -62,6 +63,11 @@ public class Player {
     @VisibleForTesting
     public void onCreate() {
         creationDateTime = LocalDateTime.now();
+        lastModifiedDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
         lastModifiedDate = LocalDateTime.now();
     }
 }
