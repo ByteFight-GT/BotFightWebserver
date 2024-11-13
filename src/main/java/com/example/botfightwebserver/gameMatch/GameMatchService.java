@@ -76,6 +76,18 @@ public class GameMatchService {
     public boolean isGameMatchWaiting(Long id) {
         return gameMatchRepository.findById(id).get().getStatus() == MATCH_STATUS.WAITING;
     }
+
+    public List<GameMatchJob> deleteQueuedMatches() {
+        List<GameMatchJob> removedMatches = rabbitMQService.deleteGameMatchQueue();
+        for (GameMatchJob job : removedMatches) {
+            setGameMatchStatus(job.gameMatchId(), MATCH_STATUS.MANUALLY_FAILED);
+        }
+        return removedMatches;
+    }
+
+    public List<GameMatchJob> peekQueuedMatches() {
+        return rabbitMQService.peekGameMatchQueue();
+    }
     }
 
 

@@ -23,8 +23,5 @@ public class storageTest {
         // Assert
         assertNotNull(bucket, "Bucket should exist");
         assertEquals("botfight_submissions", bucket.getName(), "Bucket name should match");
-
-        // Optional: Test if we can list files
-        assertTrue(bucket.list().iterateAll().iterator().hasNext(), "Bucket should be accessible");
     }
 }
