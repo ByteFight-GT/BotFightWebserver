@@ -1,43 +1,44 @@
 package com.example.botfightwebserver.player;
 
+import com.example.botfightwebserver.PersistentTestBase;
 import com.example.botfightwebserver.submission.Submission;
 import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@DataJpaTest
+@AutoConfigureTestDatabase
+@ActiveProfiles("test")
+class PlayerTest extends PersistentTestBase {
 
-class PlayerTest{
-
-    private static Validator validator;
     private Submission testSubmission;
-
-    @BeforeAll
-    static void setupValidator() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
 
     @BeforeEach
     void setup() {
-        testSubmission = new Submission();
+        testSubmission = persistAndReturnEntity(new Submission());
     }
 
     @Test
     void testBuilderWithAllFields() {
         LocalDateTime now = LocalDateTime.now();
 
-        // When
         Player player = Player.builder()
             .id(1L)
             .name("John Doe")
@@ -97,51 +98,31 @@ class PlayerTest{
     }
 
     @Test
-    void testSettersAndGetters() {
-        Player player = new Player();
-
-        player.setId(1L);
-        player.setName("Test Player");
-        player.setEmail("test@example.com");
-        player.setElo(1400.0);
-        player.setMatchesPlayed(5);
-        player.setNumberWins(3);
-        player.setNumberLosses(1);
-        player.setNumberDraws(1);
-        player.setCurrentSubmission(testSubmission);
-
-        assertEquals(1L, player.getId());
-        assertEquals("Test Player", player.getName());
-        assertEquals("test@example.com", player.getEmail());
-        assertEquals(1400.0, player.getElo());
-        assertEquals(5, player.getMatchesPlayed());
-        assertEquals(3, player.getNumberWins());
-        assertEquals(1, player.getNumberLosses());
-        assertEquals(1, player.getNumberDraws());
-        assertEquals(testSubmission, player.getCurrentSubmission());
-    }
-
-    @Test
     void testCurrentSubmissionNull() {
         // Given
         Player player = Player.builder()
             .name("Test Player")
             .email("test@example.com")
             .build();
-        Set<ConstraintViolation<Player>> violations = validator.validate(player);
-        assertTrue(violations.isEmpty());
+       Player persistedPlayer = persistAndReturnEntity(player);
+
+       assertEquals("Test Player", persistedPlayer.getName());
+       assertEquals("test@example.com", persistedPlayer.getEmail());
+       assertNotNull(persistedPlayer.getId());
     }
 
     @Test
     void testInvalidEmail() {
-        // Given
         Player player = Player.builder()
             .name("Test Player")
             .email("invalidEmail")
             .build();
-        Set<ConstraintViolation<Player>> violations = validator.validate(player);
-        System.out.println(violations);
-        assertEquals(1, violations.size());
-    }
 
+        ConstraintViolationException exception = assertThrows(ConstraintViolationException.class, () -> {
+            persistAndReturnEntity(player);
+        });
+
+        assertEquals("must be a well-formed email address",
+            exception.getConstraintViolations().iterator().next().getMessage());
+    }
 }
