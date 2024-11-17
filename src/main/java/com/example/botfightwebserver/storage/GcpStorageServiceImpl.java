@@ -1,42 +1,42 @@
 package com.example.botfightwebserver.storage;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 @Service
 @Slf4j
 public class GcpStorageServiceImpl implements StorageService {
 
-    private Storage storage;
-    private String bucketName="botfight_submissions";
+    private final Storage storage;
+    private final Clock clock;
+    private final String bucketName = "botfight_submissions";
 
-    public GcpStorageServiceImpl(Storage storage) {
+    public GcpStorageServiceImpl(Storage storage, Clock clock) {
         this.storage = storage;
+        this.clock = clock;
     }
 
     @Override
     public String uploadFile(Long playerId, MultipartFile file) {
         try {
-        String filename = generateFileName(playerId, file.getOriginalFilename());
-        BlobId blobId = BlobId.of(bucketName, filename);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-            .setContentType(file.getContentType())
-            .build();
-        Blob blob = storage.create(blobInfo, file.getBytes());
+            String filename = generateFileName(playerId, file.getOriginalFilename());
+            BlobId blobId = BlobId.of(bucketName, filename);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+            Blob blob = storage.create(blobInfo, file.getBytes());
 
-        return filename;
+            return filename;
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new RuntimeException("Failed to upload file ", e);
@@ -52,7 +52,7 @@ public class GcpStorageServiceImpl implements StorageService {
     }
 
     public String generateFileName(Long playerId, String originalFileName) {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        return String.format("PLAYER_%s/%s_%s",playerId,  originalFileName, timestamp);
+        String timestamp = LocalDateTime.now(clock).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return String.format("PLAYER_%s/%s_%s", playerId, originalFileName, timestamp);
     }
 }

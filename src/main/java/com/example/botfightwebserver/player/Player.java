@@ -23,6 +23,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -34,6 +35,9 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class Player {
+
+    private static Clock clock = Clock.systemDefaultZone();
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -60,14 +64,18 @@ public class Player {
     private Submission currentSubmission;
 
     @PrePersist
-    @VisibleForTesting
     public void onCreate() {
-        creationDateTime = LocalDateTime.now();
-        lastModifiedDate = LocalDateTime.now();
+        creationDateTime = LocalDateTime.now(clock);
+        lastModifiedDate = LocalDateTime.now(clock);
     }
 
     @PreUpdate
     public void onUpdate() {
-        lastModifiedDate = LocalDateTime.now();
+        lastModifiedDate = LocalDateTime.now(clock);
+    }
+
+    @VisibleForTesting
+    public static void setClock(Clock testClock) {
+        clock = testClock;
     }
 }

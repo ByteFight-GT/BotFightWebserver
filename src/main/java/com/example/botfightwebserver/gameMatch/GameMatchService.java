@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class GameMatchService {
     private final SubmissionService submissionService;
     private final RabbitMQService rabbitMQService;
     private final GameMatchLogService gameMatchLogService;
+    private final Clock clock;
 
     public List<GameMatch> getGameMatches() {
         return gameMatchRepository.findAll();
@@ -51,7 +53,7 @@ public class GameMatchService {
         GameMatch gameMatch = gameMatchRepository.findById(gameMatchId).get();
         gameMatch.setStatus(status);
         if (!MATCH_STATUS.WAITING.equals(gameMatch.getStatus())) {
-            gameMatch.setProcessedAt(LocalDateTime.now());
+            gameMatch.setProcessedAt(LocalDateTime.now(clock));
         }
         gameMatchRepository.save(gameMatch);
     }

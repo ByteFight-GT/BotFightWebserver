@@ -2,6 +2,7 @@ package com.example.botfightwebserver.gameMatch;
 
 import com.example.botfightwebserver.player.Player;
 import com.example.botfightwebserver.submission.Submission;
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -18,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Entity
@@ -58,15 +60,22 @@ public class GameMatch {
 
     private String map;
 
+    private static Clock clock = Clock.systemDefaultZone();
+
     @PrePersist
     public void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now(clock);
         if (status == null) {
             status = MATCH_STATUS.WAITING;
         }
         if (reason == null) {
             reason = MATCH_REASON.UNKNOWN;
         }
+    }
+
+    @VisibleForTesting
+    public static void setClock(Clock testClock) {
+        clock = testClock;
     }
 }
 

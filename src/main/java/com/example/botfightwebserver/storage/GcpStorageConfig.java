@@ -18,10 +18,17 @@ public class GcpStorageConfig {
     @Value("${spring.cloud.gcp.credentials.location}")
     private String credentialsPath;
 
+    @Value("${spring.cloud.gcp.credentials.project}")
+    private String projectId;
+
+    protected FileInputStream createFileInputStream(String path) throws IOException {
+        return new FileInputStream(path);
+    }
+
     @Bean
     public Storage googleCloudStorage() throws IOException {
         GoogleCredentials credentials = GoogleCredentials.fromStream(
-            new FileInputStream(credentialsPath)
+            createFileInputStream(credentialsPath)
         );
 
         return StorageOptions.newBuilder()

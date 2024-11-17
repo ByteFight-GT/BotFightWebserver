@@ -62,8 +62,6 @@ class RabbitMQConfigurationTest {
     @Test
     void jsonMessageConverter() {
         Jackson2JsonMessageConverter converter = configuration.jsonMessageConverter();
-
-        // Assert
     }
 
     @Test

@@ -5,7 +5,9 @@ import com.example.botfightwebserver.submission.Submission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,6 +17,9 @@ class GameMatchTest {
     private Player playerTwo;
     private Submission submissionOne;
     private Submission submissionTwo;
+    private Clock fixedClock;
+
+    private final LocalDateTime NOW = LocalDateTime.of(2024, 1, 1, 12, 0);
 
     @BeforeEach
     void setUp() {
@@ -36,15 +41,18 @@ class GameMatchTest {
         gameMatch.setSubmissionOne(submissionOne);
         gameMatch.setSubmissionTwo(submissionTwo);
         gameMatch.setMap("test_map");
+
+        fixedClock = Clock.fixed(NOW.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        GameMatch.setClock(fixedClock);
     }
 
     @Test
     void testPrePersist() {
         gameMatch.onCreate();
 
-        assertNotNull(gameMatch.getCreatedAt());
         assertEquals(MATCH_STATUS.WAITING, gameMatch.getStatus());
         assertEquals(MATCH_REASON.UNKNOWN, gameMatch.getReason());
+        assertEquals(NOW, gameMatch.getCreatedAt());
     }
 
     @Test
@@ -77,8 +85,8 @@ class GameMatchTest {
 
     @Test
     void testSettersAndGetters() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime processed = LocalDateTime.now().plusMinutes(5);
+        LocalDateTime now = LocalDateTime.now(fixedClock);
+        LocalDateTime processed = LocalDateTime.now(fixedClock).plusMinutes(5);
 
         gameMatch.setId(1L);
         gameMatch.setStatus(MATCH_STATUS.IN_PROGRESS);

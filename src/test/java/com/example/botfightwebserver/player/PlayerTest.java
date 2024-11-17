@@ -15,7 +15,10 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,9 +32,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PlayerTest extends PersistentTestBase {
 
     private Submission testSubmission;
+    private Clock fixedClock;
 
+    private final LocalDateTime NOW = LocalDateTime.of(2024, 1, 1, 12, 0);
     @BeforeEach
     void setup() {
+        fixedClock = Clock.fixed(NOW.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        Player.setClock(fixedClock);
         testSubmission = persistAndReturnEntity(new Submission());
     }
 
@@ -93,13 +100,12 @@ class PlayerTest extends PersistentTestBase {
 
         assertNotNull(player.getCreationDateTime());
         assertNotNull(player.getLastModifiedDate());
-        assertTrue(player.getCreationDateTime().isBefore(LocalDateTime.now().plusSeconds(1)));
-        assertTrue(player.getLastModifiedDate().isBefore(LocalDateTime.now().plusSeconds(1)));
+        assertEquals(player.getCreationDateTime(), NOW);
+        assertEquals(player.getLastModifiedDate(), NOW);
     }
 
     @Test
     void testCurrentSubmissionNull() {
-        // Given
         Player player = Player.builder()
             .name("Test Player")
             .email("test@example.com")
@@ -124,5 +130,36 @@ class PlayerTest extends PersistentTestBase {
 
         assertEquals("must be a well-formed email address",
             exception.getConstraintViolations().iterator().next().getMessage());
+    }
+
+    @Test
+    void playerUpdateSetsModifiedDate() {
+        Player player = Player.builder()
+            .name("Test Player")
+            .email("test@example.com")
+            .currentSubmission(testSubmission)
+            .build();
+
+        player.onCreate();
+
+        assertNotNull(player.getCreationDateTime());
+        assertNotNull(player.getLastModifiedDate());
+        assertEquals(player.getCreationDateTime(), NOW);
+        assertEquals(player.getLastModifiedDate(), NOW);
+
+        player.setMatchesPlayed(1);
+        player.setNumberWins(1);
+
+        LocalDateTime dayAfter = NOW.plusDays(1);
+        Clock newClock = Clock.fixed(dayAfter.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        Player.setClock(newClock);
+
+        player.onUpdate();
+
+
+        assertNotNull(player.getCreationDateTime());
+        assertNotNull(player.getLastModifiedDate());
+        assertEquals(NOW, player.getCreationDateTime());
+        assertEquals(dayAfter, player.getLastModifiedDate());
     }
 }
