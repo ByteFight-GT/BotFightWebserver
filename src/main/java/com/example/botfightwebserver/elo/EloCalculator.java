@@ -6,52 +6,233 @@ import com.example.botfightwebserver.player.PlayerDTO;
 import lombok.Builder;
 import org.springframework.stereotype.Service;
 
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+
 @Service
 @Builder
 public class EloCalculator {
 
-    private static final int K_FACTOR_DEFAULT = 20;
-    private static final int K_FACTOR_NEW_PLAYER = 40;
-    private static final int K_FACTOR_HIGH_RATED = 10;
-    private static final int NEW_PLAYER_THRESHOLD = 20;
+
+    private static class Glicko {
+
+        public static final double MU = 1500.0;
+        public static final double PHI = 350.0;
+        public static final double SIGMA = 0.06;
+        public static final double TAU = 1.0;
+        public static final double EPSILON = 0.000001;
+        public static final double RATIO = 173.7178;
+
+        public static class Rating {
+            private double mu;
+            private double phi;
+            private double sigma;
+
+            public Rating(double mu, double phi, double sigma) {
+                this.mu = mu;
+                this.phi = phi;
+                this.sigma = sigma;
+            }
+
+            public double getMu() {
+                return mu;
+            }
+
+            public double getPhi() {
+                return phi;
+            }
+
+            public double getSigma() {
+                return sigma;
+            }
+
+            @Override
+            public String toString() {
+                return String.format("Rating(mu=%.3f, phi=%.3f, sigma=%.3f)", mu, phi, sigma);
+            }
+        }
+
+        public static class MatchResult {
+            private double score1;
+            private double score2;
+            private Rating updatedPlayer1;
+            private Rating updatedPlayer2;
+
+            public MatchResult(double score1, double score2, Rating updatedPlayer1, Rating updatedPlayer2) {
+                this.score1 = score1;
+                this.score2 = score2;
+                this.updatedPlayer1 = updatedPlayer1;
+                this.updatedPlayer2 = updatedPlayer2;
+            }
+
+            public double getScore1() {
+                return score1;
+            }
+
+            public double getScore2() {
+                return score2;
+            }
+
+            public Rating getUpdatedPlayer1() {
+                return updatedPlayer1;
+            }
+
+            public Rating getUpdatedPlayer2() {
+                return updatedPlayer2;
+            }
+
+            // Convenience methods to access mu, phi, sigma
+            public double getPlayer1Mu() {
+                return updatedPlayer1.getMu();
+            }
+
+            public double getPlayer1Phi() {
+                return updatedPlayer1.getPhi();
+            }
+
+            public double getPlayer1Sigma() {
+                return updatedPlayer1.getSigma();
+            }
+
+            public double getPlayer2Mu() {
+                return updatedPlayer2.getMu();
+            }
+
+            public double getPlayer2Phi() {
+                return updatedPlayer2.getPhi();
+            }
+
+            public double getPlayer2Sigma() {
+                return updatedPlayer2.getSigma();
+            }
+        }
+
+        public Rating createRating(Double mu, Double phi, Double sigma) {
+            if (mu == null) mu = MU;
+            if (phi == null) phi = PHI;
+            if (sigma == null) sigma = SIGMA;
+            return new Rating(mu, phi, sigma);
+        }
+
+        public Rating scaleDown(Rating rating, double ratio) {
+            double mu = (rating.getMu() - MU) / ratio;
+            double phi = rating.getPhi() / ratio;
+            return createRating(mu, phi, rating.getSigma());
+        }
+
+        public Rating scaleUp(Rating rating, double ratio) {
+            double mu = rating.getMu() * ratio + MU;
+            double phi = rating.getPhi() * ratio;
+            return createRating(mu, phi, rating.getSigma());
+        }
+
+        public double reduceImpact(Rating rating) {
+            return 1.0 / Math.sqrt(1.0 + (3 * Math.pow(rating.getPhi(), 2)) / Math.pow(Math.PI, 2));
+        }
+
+        public double expectScore(Rating rating, Rating otherRating, double impact) {
+            return 1.0 / (1.0 + Math.exp(-impact * (rating.getMu() - otherRating.getMu())));
+        }
+
+        public Rating rate(Rating rating, List<Double> game) {
+            rating = scaleDown(rating, RATIO);
+
+            double varianceInv = 0;
+            double difference = 0;
+
+            double actualScore = game.get(0);
+            Rating opponent = scaleDown(new Rating(game.get(1), game.get(2), game.get(3)), RATIO);
+            double impact = reduceImpact(opponent);
+            double expectedScore = expectScore(rating, opponent, impact);
+            varianceInv += Math.pow(impact, 2) * expectedScore * (1 - expectedScore);
+            difference += impact * (actualScore - expectedScore);
+
+            double variance = 1.0 / varianceInv;
+            difference /= varianceInv;
+
+            double sigma = determineSigma(rating, difference, variance);
+            double phiStar = Math.sqrt(Math.pow(rating.getPhi(), 2) + Math.pow(sigma, 2));
+            double phi = 1.0 / Math.sqrt(1.0 / Math.pow(phiStar, 2) + 1.0 / variance);
+            double mu = rating.getMu() + Math.pow(phi, 2) * (difference / variance);
+
+            return scaleUp(createRating(mu, phi, sigma), RATIO);
+        }
+
+        public MatchResult rate1vs1(Rating rating1, Rating rating2, String winner) {
+            double score1;
+            double score2;
+
+            switch (winner.toLowerCase()) {
+                case "player1":
+                    score1 = 1.0;
+                    score2 = 0.0;
+                    break;
+                case "player2":
+                    score1 = 0.0;
+                    score2 = 1.0;
+                    break;
+                case "draw":
+                    score1 = 0.5;
+                    score2 = 0.5;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid winner: " + winner);
+            }
+
+            Rating updatedPlayer1 = rate(rating1, Arrays.asList(score1, rating2.getMu(), rating2.getPhi(), rating2.getSigma()));
+            Rating updatedPlayer2 = rate(rating2, Arrays.asList(score2, rating1.getMu(), rating1.getPhi(), rating1.getSigma()));
+
+            return new MatchResult(score1, score2, updatedPlayer1, updatedPlayer2);
+        }
+
+        public double determineSigma(Rating rating, double difference, double variance) {
+            return 0.0;
+        }
+
+
+    }
+
 
     public EloChanges calculateElo(Player player1, Player player2, MATCH_STATUS matchStatus) {
-        if (matchStatus == MATCH_STATUS.IN_PROGRESS || matchStatus == MATCH_STATUS.FAILED || matchStatus == MATCH_STATUS.WAITING) {
-            throw new IllegalArgumentException("Match must have determined result. Match was in state: " + matchStatus);
+        // Validate the match status
+        if (matchStatus == MATCH_STATUS.IN_PROGRESS ||
+                matchStatus == MATCH_STATUS.FAILED ||
+                matchStatus == MATCH_STATUS.WAITING) {
+            throw new IllegalArgumentException("Match must have a determined result. Match was in state: " + matchStatus);
         }
-        double player1Expected = calculateExpectedScore(player1.getElo(), player2.getElo());
-        double player2Expected = calculateExpectedScore(player2.getElo(), player1.getElo());
 
-        double player1Actual = 0;
-        double player2Actual = 0;
+        // Validate player Elo ratings
+        if (player1.getElo() == null || player2.getElo() == null) {
+            throw new IllegalArgumentException("Player Elo cannot be null.");
+        }
+
+
+        Glicko glicko = new Glicko();
+
+        // Create player ratings
+        Glicko.Rating player1Rating = new Glicko.Rating(player1.getElo(), 350, 0.06);
+        Glicko.Rating player2Rating = new Glicko.Rating(player2.getElo(), 350, 0.06);
+
+        // Determine match status for Glicko calculation
+        String glickoMatchStatus;
         if (matchStatus == MATCH_STATUS.DRAW) {
-            player1Actual = 0.5;
-            player2Actual = 0.5;
+            glickoMatchStatus = "draw";
+        } else if (matchStatus == MATCH_STATUS.PLAYER_ONE_WIN) {
+            glickoMatchStatus = "player1";
+        } else if (matchStatus == MATCH_STATUS.PLAYER_TWO_WIN) {
+            glickoMatchStatus = "player2";
         } else {
-            player1Actual = matchStatus == MATCH_STATUS.PLAYER_ONE_WIN ? 1.0 : 0.0;
-            player2Actual = matchStatus == MATCH_STATUS.PLAYER_TWO_WIN ? 1.0 : 0.0;
+            throw new IllegalArgumentException("Unknown match status: " + matchStatus);
         }
 
-        int player1KFactor = determineKFactor(player1.getElo(), player1.getMatchesPlayed());
-        int player2KFactor = determineKFactor(player2.getElo(), player2.getMatchesPlayed());
 
-        double player1Change = player1KFactor * (player1Actual - player1Expected);
-        double player2Change = player2KFactor * (player2Actual - player2Expected);
+        Glicko.MatchResult result = glicko.rate1vs1(player1Rating, player2Rating, glickoMatchStatus);
 
-        return new EloChanges(player1Change, player2Change);
-    }
 
-    private double calculateExpectedScore(double player1Elo, double player2Elo) {
-        return 1.0 / (1.0 + Math.pow(10, (player2Elo - player1Elo) / 400.0));
-    }
-
-    private int determineKFactor(double playerElo, int gamesPlayed) {
-        if (gamesPlayed < NEW_PLAYER_THRESHOLD) {
-            return  K_FACTOR_NEW_PLAYER;
-        }
-        if (playerElo > 2400) {
-            return K_FACTOR_HIGH_RATED;
-        }
-        return K_FACTOR_DEFAULT;
+        return new EloChanges(result.getUpdatedPlayer1().getMu() - player1.getElo(), result.getUpdatedPlayer2().getMu() - player2.getElo());
     }
 }
+

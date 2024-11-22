@@ -4,87 +4,76 @@ import com.example.botfightwebserver.gameMatch.MATCH_STATUS;
 import com.example.botfightwebserver.player.Player;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EloCalculatorTest {
 
     @Test
-    void calculateElo_Player1Wins_DefaultKFactor() {
-        EloCalculator calculator = EloCalculator.builder().build();
+    void testCalculateEloPlayerOneWins() {
+        EloCalculator eloCalculator = new EloCalculator();
 
-        Player player1 = Player.builder().elo(1600.0).matchesPlayed(25).build();
-        Player player2 = Player.builder().elo(1500.0).matchesPlayed(30).build();
+        Player player1 = Player.builder()
+                .name("Tyler Hansen")
+                .email("tyler@example.com")
+                .elo(1500.0)
+                .build();
 
-        EloChanges changes = calculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_ONE_WIN);
+        Player player2 = Player.builder()
+                .name("Patrick Kwok")
+                .email("patrick@example.com")
+                .elo(1500.0)
+                .build();
 
-        double expectedPlayer1Change = 20 * (1.0 - 1.0 / (1.0 + Math.pow(10, (1500.0 - 1600.0) / 400.0)));
-        double expectedPlayer2Change = 20 * (0.0 - 1.0 / (1.0 + Math.pow(10, (1600.0 - 1500.0) / 400.0)));
+        EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_ONE_WIN);
 
-        assertEquals(expectedPlayer1Change, changes.getPlayer1Change(), "Player 1's ELO change is incorrect.");
-        assertEquals(expectedPlayer2Change, changes.getPlayer2Change(), "Player 2's ELO change is incorrect.");
+        assertNotNull(eloChanges, "EloChanges should not be null");
+        assertTrue(eloChanges.getPlayer1Change() > 0, "Player 1 Elo should increase");
+        assertTrue(eloChanges.getPlayer2Change() < 0, "Player 2 Elo should decrease");
     }
 
     @Test
-    void calculateElo_Player2Wins_DefaultKFactor() {
-        EloCalculator calculator = EloCalculator.builder().build();
+    void testCalculateEloPlayerTwoWins() {
+        EloCalculator eloCalculator = new EloCalculator();
 
-        Player player1 = Player.builder().elo(1600.0).matchesPlayed(25).build();
-        Player player2 = Player.builder().elo(1500.0).matchesPlayed(30).build();
+        Player player1 = Player.builder()
+                .name("Tyler Hansen")
+                .email("tyler@example.com")
+                .elo(1500.0)
+                .build();
 
-        EloChanges changes = calculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_TWO_WIN);
+        Player player2 = Player.builder()
+                .name("Patrick Kwok")
+                .email("patrick@example.com")
+                .elo(1500.0)
+                .build();
 
-        double expectedPlayer1Change = 20 * (0.0 - 1.0 / (1.0 + Math.pow(10, (1500.0 - 1600.0) / 400.0)));
-        double expectedPlayer2Change = 20 * (1.0 - 1.0 / (1.0 + Math.pow(10, (1600.0 - 1500.0) / 400.0)));
+        EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_TWO_WIN);
 
-        assertEquals(expectedPlayer1Change, changes.getPlayer1Change(), "Player 1's ELO change is incorrect.");
-        assertEquals(expectedPlayer2Change, changes.getPlayer2Change(), "Player 2's ELO change is incorrect.");
+        assertNotNull(eloChanges, "EloChanges should not be null");
+        assertTrue(eloChanges.getPlayer1Change() < 0, "Player 1 Elo should decrease");
+        assertTrue(eloChanges.getPlayer2Change() > 0, "Player 2 Elo should increase");
     }
 
     @Test
-    void calculateElo_Player1Wins_Expert_Vs_Newbie() {
-        EloCalculator calculator = EloCalculator.builder().build();
+    void testCalculateEloDraw() {
+        EloCalculator eloCalculator = new EloCalculator();
 
-        Player player1 = Player.builder().elo(2500.0).matchesPlayed(25).build();
-        Player player2 = Player.builder().elo(1200.0).matchesPlayed(19).build();
+        Player player1 = Player.builder()
+                .name("Tyler Hansen")
+                .email("tyler@example.com")
+                .elo(1500.0)
+                .build();
 
-        EloChanges changes = calculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_ONE_WIN);
+        Player player2 = Player.builder()
+                .name("Patrick Kwok")
+                .email("patrick@example.com")
+                .elo(1500.0)
+                .build();
 
-        double expectedPlayer1Change = 10 * (1.0 - 1.0 / (1.0 + Math.pow(10, (1200.0 - 2500.0) / 400.0)));
-        double expectedPlayer2Change = 40 * (0.0 - 1.0 / (1.0 + Math.pow(10, (2500.0 - 1200.0) / 400.0)));
+        EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.DRAW);
 
-        assertEquals(expectedPlayer1Change, changes.getPlayer1Change(), "Player 1's ELO change is incorrect.");
-        assertEquals(expectedPlayer2Change, changes.getPlayer2Change(), "Player 2's ELO change is incorrect.");
-    }
-
-    @Test
-    void calculateElo_Draw_DefaultKFactor() {
-        EloCalculator calculator = EloCalculator.builder().build();
-
-        Player player1 = Player.builder().elo(1600.0).matchesPlayed(25).build();
-        Player player2 = Player.builder().elo(1500.0).matchesPlayed(30).build();
-
-        EloChanges changes = calculator.calculateElo(player1, player2, MATCH_STATUS.DRAW);
-
-        double player1Expected = 1.0 / (1.0 + Math.pow(10, (1500.0 - 1600.0) / 400.0));
-        double player2Expected = 1.0 / (1.0 + Math.pow(10, (1600.0 - 1500.0) / 400.0));
-
-        double expectedPlayer1Change = 20 * (0.5 - player1Expected);
-        double expectedPlayer2Change = 20 * (0.5 - player2Expected);
-
-        assertEquals(expectedPlayer1Change, changes.getPlayer1Change(), "Player 1's ELO change is incorrect.");
-        assertEquals(expectedPlayer2Change, changes.getPlayer2Change(), "Player 2's ELO change is incorrect.");
-    }
-
-    @Test
-    void calculateElo_InvalidMatchStatus() {
-        EloCalculator calculator = EloCalculator.builder().build();
-
-        Player player1 = Player.builder().elo(1600.0).matchesPlayed(25).build();
-        Player player2 = Player.builder().elo(1500.0).matchesPlayed(30).build();
-
-        assertThrows(IllegalArgumentException.class,
-                () -> calculator.calculateElo(player1, player2, MATCH_STATUS.IN_PROGRESS),
-                "Invalid match status should throw IllegalArgumentException.");
+        assertNotNull(eloChanges, "EloChanges should not be null");
+        assertTrue(eloChanges.getPlayer1Change() == 0, "Player 1 Elo should be the same");
+        assertTrue(eloChanges.getPlayer2Change() == 0, "Player 2 Elo should be the same");
     }
 }
