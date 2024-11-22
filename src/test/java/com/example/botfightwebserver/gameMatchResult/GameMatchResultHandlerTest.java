@@ -81,7 +81,7 @@ class GameMatchResultHandlerTest {
     void handleGameMatchResult_LadderMatch_PlayerOneWin() {
         GameMatchResult result = new GameMatchResult(1L, MATCH_STATUS.PLAYER_ONE_WIN, "match log");
         gameMatch.setReason(MATCH_REASON.LADDER);
-        EloChanges eloChanges = new EloChanges(15.0, -15.0);
+        EloChanges eloChanges = new EloChanges(15.0, -15.0, 0.0, 0.0, 0.0, 0.0);
 
         when(gameMatchService.isGameMatchIdExist(1L)).thenReturn(true);
         when(gameMatchService.isGameMatchWaiting(1L)).thenReturn(true);
@@ -91,8 +91,8 @@ class GameMatchResultHandlerTest {
 
         gameMatchResultHandler.handleGameMatchResult(result);
 
-        verify(playerService).updatePlayerAfterLadderMatch(player1, 15, true, false);
-        verify(playerService).updatePlayerAfterLadderMatch(player2, -15, false, false);
+        verify(playerService).updatePlayerAfterLadderMatch(player1, 15,0.0,0.0, true, false);
+        verify(playerService).updatePlayerAfterLadderMatch(player2, -15, 0.0,0.0, false, false);
         verify(gameMatchService).setGameMatchStatus(1L, MATCH_STATUS.PLAYER_ONE_WIN);
         verify(gameMatchLogService).createGameMatchLog(1L, "match log", 15, -15);
     }

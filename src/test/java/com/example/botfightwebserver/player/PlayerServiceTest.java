@@ -304,7 +304,7 @@ class PlayerServiceTest extends PersistentTestBase {
 
         double eloChange = 15.0;
 
-        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange, true, false);
+        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange,0.0,0.0, true, false);
 
         assertEquals(1215.0, persistedPlayer.getElo());
         assertEquals(6, persistedPlayer.getMatchesPlayed());
@@ -327,7 +327,7 @@ class PlayerServiceTest extends PersistentTestBase {
 
         double eloChange = -15.0;
 
-        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange, false, false);
+        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange,0.0,0.0, false, false);
 
         assertEquals(1185.0, persistedPlayer.getElo());
         assertEquals(6, persistedPlayer.getMatchesPlayed());
@@ -350,7 +350,7 @@ class PlayerServiceTest extends PersistentTestBase {
 
         double eloChange = 0.0;
 
-        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange, false, true);
+        Player persistedPlayer = playerService.updatePlayerAfterLadderMatch(initialPlayer, eloChange,0.0,0.0, false, true);
 
         assertEquals(1200.0, persistedPlayer.getElo());
         assertEquals(6, persistedPlayer.getMatchesPlayed());
@@ -374,7 +374,7 @@ class PlayerServiceTest extends PersistentTestBase {
 
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
-            () -> playerService.updatePlayerAfterLadderMatch(initialPlayer, 15.0, true, true)
+            () -> playerService.updatePlayerAfterLadderMatch(initialPlayer, 15.0,0.0,0.0, true, true)
         );
 
         assertEquals("Result can't be a win and a draw", exception.getMessage());

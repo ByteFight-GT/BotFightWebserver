@@ -66,14 +66,14 @@ public class GameMatchResultHandler {
 
     private void handleLadderResult(Player player1, Player player2, MATCH_STATUS status, EloChanges eloChanges) {
         if (status == MATCH_STATUS.PLAYER_ONE_WIN) {
-            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), true, false);
-            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), false, false);
+            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), eloChanges.getPlayer1PhiChange(),eloChanges.getPlayer1SigmaChange(), true, false);
+            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), eloChanges.getPlayer2PhiChange(), eloChanges.getPlayer2SigmaChange(), false, false);
         } else if (status == MATCH_STATUS.PLAYER_TWO_WIN) {
-            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), false, false);
-            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), true, false);
+            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), eloChanges.getPlayer1PhiChange(),eloChanges.getPlayer1SigmaChange(), false, false);
+            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), eloChanges.getPlayer2PhiChange(), eloChanges.getPlayer2SigmaChange(), true, false);
         } else if (status == MATCH_STATUS.DRAW) {
-            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), false, true);
-            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), false, true);
+            playerService.updatePlayerAfterLadderMatch(player1, eloChanges.getPlayer1Change(), eloChanges.getPlayer1PhiChange(),eloChanges.getPlayer1SigmaChange(), false, true);
+            playerService.updatePlayerAfterLadderMatch(player2, eloChanges.getPlayer2Change(), eloChanges.getPlayer2PhiChange(), eloChanges.getPlayer2SigmaChange(), false, true);
         }
     }
 

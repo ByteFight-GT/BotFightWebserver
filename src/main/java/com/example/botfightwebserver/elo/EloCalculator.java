@@ -17,7 +17,8 @@ import java.util.Arrays;
 public class EloCalculator {
 
 
-    private static class Glicko {
+
+    public static class Glicko {
 
         public static final double MU = 1500.0;
         public static final double PHI = 350.0;
@@ -110,34 +111,34 @@ public class EloCalculator {
             }
         }
 
-        public Rating createRating(Double mu, Double phi, Double sigma) {
+        public static Rating createRating(Double mu, Double phi, Double sigma) {
             if (mu == null) mu = MU;
             if (phi == null) phi = PHI;
             if (sigma == null) sigma = SIGMA;
             return new Rating(mu, phi, sigma);
         }
 
-        public Rating scaleDown(Rating rating, double ratio) {
+        public static Rating scaleDown(Rating rating, double ratio) {
             double mu = (rating.getMu() - MU) / ratio;
             double phi = rating.getPhi() / ratio;
             return createRating(mu, phi, rating.getSigma());
         }
 
-        public Rating scaleUp(Rating rating, double ratio) {
+        public static Rating scaleUp(Rating rating, double ratio) {
             double mu = rating.getMu() * ratio + MU;
             double phi = rating.getPhi() * ratio;
             return createRating(mu, phi, rating.getSigma());
         }
 
-        public double reduceImpact(Rating rating) {
+        public static double reduceImpact(Rating rating) {
             return 1.0 / Math.sqrt(1.0 + (3 * Math.pow(rating.getPhi(), 2)) / Math.pow(Math.PI, 2));
         }
 
-        public double expectScore(Rating rating, Rating otherRating, double impact) {
+        public static double expectScore(Rating rating, Rating otherRating, double impact) {
             return 1.0 / (1.0 + Math.exp(-impact * (rating.getMu() - otherRating.getMu())));
         }
 
-        public Rating rate(Rating rating, List<Double> game) {
+        public static Rating rate(Rating rating, List<Double> game) {
             rating = scaleDown(rating, RATIO);
 
             double varianceInv = 0;
@@ -161,7 +162,7 @@ public class EloCalculator {
             return scaleUp(createRating(mu, phi, sigma), RATIO);
         }
 
-        public MatchResult rate1vs1(Rating rating1, Rating rating2, String winner) {
+        public static MatchResult rate1vs1(Rating rating1, Rating rating2, String winner) {
             double score1;
             double score2;
 
@@ -188,7 +189,7 @@ public class EloCalculator {
             return new MatchResult(score1, score2, updatedPlayer1, updatedPlayer2);
         }
 
-        public double determineSigma(Rating rating, double difference, double variance) {
+        public static double determineSigma(Rating rating, double difference, double variance) {
             return 0.0;
         }
 
@@ -210,11 +211,11 @@ public class EloCalculator {
         }
 
 
-        Glicko glicko = new Glicko();
+
 
         // Create player ratings
-        Glicko.Rating player1Rating = new Glicko.Rating(player1.getElo(), 350, 0.06);
-        Glicko.Rating player2Rating = new Glicko.Rating(player2.getElo(), 350, 0.06);
+        Glicko.Rating player1Rating = new Glicko.Rating(player1.getElo(), player1.getPhi(), player1.getSigma());
+        Glicko.Rating player2Rating = new Glicko.Rating(player2.getElo(), player2.getPhi(), player2.getSigma());
 
         // Determine match status for Glicko calculation
         String glickoMatchStatus;
@@ -229,10 +230,12 @@ public class EloCalculator {
         }
 
 
-        Glicko.MatchResult result = glicko.rate1vs1(player1Rating, player2Rating, glickoMatchStatus);
+        Glicko.MatchResult result = Glicko.rate1vs1(player1Rating, player2Rating, glickoMatchStatus);
 
 
-        return new EloChanges(result.getUpdatedPlayer1().getMu() - player1.getElo(), result.getUpdatedPlayer2().getMu() - player2.getElo());
+        return new EloChanges(result.getUpdatedPlayer1().getMu() - player1.getElo(), result.getUpdatedPlayer2().getMu() - player2.getElo(),
+                result.getUpdatedPlayer1().getPhi() - player1.getPhi(),result.getUpdatedPlayer2().getPhi() - player2.getPhi(),
+                result.getUpdatedPlayer1().getSigma() - player1.getSigma(), result.getUpdatedPlayer2().getSigma() - player1.getSigma() );
     }
 }
 

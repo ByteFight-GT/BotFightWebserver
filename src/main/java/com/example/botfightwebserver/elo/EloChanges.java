@@ -16,4 +16,16 @@ public class EloChanges {
 
     @Builder.Default
     private Double player2Change = 0.0;
+
+    @Builder.Default
+    private Double player1PhiChange = 0.0;
+
+    @Builder.Default
+    private Double player2PhiChange = 0.0;
+
+    @Builder.Default
+    private Double player1SigmaChange = 0.0;
+
+    @Builder.Default
+    private Double player2SigmaChange = 0.0;
 }

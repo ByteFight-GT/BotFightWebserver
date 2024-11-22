@@ -55,13 +55,17 @@ public class PlayerService {
         }
     }
 
-    public Player updatePlayerAfterLadderMatch(Player player, double eloChange, boolean isWin, boolean isDraw) {
+    public Player updatePlayerAfterLadderMatch(Player player, double eloChange, double phiChange, double sigmaChange, boolean isWin, boolean isDraw) {
         if(isWin && isDraw) {
             throw new IllegalArgumentException("Result can't be a win and a draw");
         }
         double currentElo = player.getElo();
         double newElo = currentElo + eloChange;
+        double newPhi = currentElo + eloChange;
+        double newSigma = currentElo + eloChange;
         player.setElo(newElo);
+        player.setElo(newPhi);
+        player.setElo(newSigma);
         player.setMatchesPlayed(player.getMatchesPlayed() + 1);
         if (!isWin && !isDraw) {
             player.setNumberLosses(player.getNumberLosses() + 1);

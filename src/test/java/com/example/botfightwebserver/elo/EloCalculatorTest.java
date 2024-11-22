@@ -16,12 +16,16 @@ class EloCalculatorTest {
                 .name("Tyler Hansen")
                 .email("tyler@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         Player player2 = Player.builder()
                 .name("Patrick Kwok")
                 .email("patrick@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_ONE_WIN);
@@ -29,6 +33,8 @@ class EloCalculatorTest {
         assertNotNull(eloChanges, "EloChanges should not be null");
         assertTrue(eloChanges.getPlayer1Change() > 0, "Player 1 Elo should increase");
         assertTrue(eloChanges.getPlayer2Change() < 0, "Player 2 Elo should decrease");
+        assertTrue(eloChanges.getPlayer1PhiChange() < 0, "Player 1 Elo should increase");
+        assertTrue(eloChanges.getPlayer2PhiChange() < 0, "Player 2 Elo should decrease");
     }
 
     @Test
@@ -39,12 +45,16 @@ class EloCalculatorTest {
                 .name("Tyler Hansen")
                 .email("tyler@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         Player player2 = Player.builder()
                 .name("Patrick Kwok")
                 .email("patrick@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.PLAYER_TWO_WIN);
@@ -52,6 +62,8 @@ class EloCalculatorTest {
         assertNotNull(eloChanges, "EloChanges should not be null");
         assertTrue(eloChanges.getPlayer1Change() < 0, "Player 1 Elo should decrease");
         assertTrue(eloChanges.getPlayer2Change() > 0, "Player 2 Elo should increase");
+        assertTrue(eloChanges.getPlayer1PhiChange() < 0, "Player 1 Elo should increase");
+        assertTrue(eloChanges.getPlayer2PhiChange() < 0, "Player 2 Elo should decrease");
     }
 
     @Test
@@ -62,12 +74,16 @@ class EloCalculatorTest {
                 .name("Tyler Hansen")
                 .email("tyler@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         Player player2 = Player.builder()
                 .name("Patrick Kwok")
                 .email("patrick@example.com")
                 .elo(1500.0)
+                .phi(350)
+                .sigma(0.06)
                 .build();
 
         EloChanges eloChanges = eloCalculator.calculateElo(player1, player2, MATCH_STATUS.DRAW);
@@ -75,5 +91,7 @@ class EloCalculatorTest {
         assertNotNull(eloChanges, "EloChanges should not be null");
         assertTrue(eloChanges.getPlayer1Change() == 0, "Player 1 Elo should be the same");
         assertTrue(eloChanges.getPlayer2Change() == 0, "Player 2 Elo should be the same");
+        assertTrue(eloChanges.getPlayer1PhiChange() < 0, "Player 1 Elo should increase");
+        assertTrue(eloChanges.getPlayer2PhiChange() < 0, "Player 2 Elo should decrease");
     }
 }

@@ -57,6 +57,12 @@ public class Player {
     @Builder.Default
     private Integer numberDraws=0;
 
+    @Builder.Default
+    private Integer phi=350;
+
+    @Builder.Default
+    private Double sigma=0.06;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name="current_submission_id", nullable = true)
     private Submission currentSubmission;
