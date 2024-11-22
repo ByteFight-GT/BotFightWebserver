@@ -12,6 +12,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
+@Service
+@Builder
+public class EloCalculator {
+
+
+
     @Service
     @Builder
     public class EloCalculator {
