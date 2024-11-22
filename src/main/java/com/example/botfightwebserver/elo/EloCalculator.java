@@ -12,12 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
-@Service
-@Builder
-public class EloCalculator {
-
-
-
     @Service
     @Builder
     public class EloCalculator {
@@ -241,5 +235,4 @@ public class EloCalculator {
             return new EloChanges(result.getUpdatedPlayer1().getMu() - player1.getElo(), result.getUpdatedPlayer2().getMu() - player2.getElo());
         }
     }
-
 
