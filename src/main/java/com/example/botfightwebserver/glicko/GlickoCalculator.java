@@ -130,14 +130,14 @@ public class GlickoCalculator {
         return 1.0 / (1.0 + Math.exp(-impact * (rating.getMu() - otherRating.getMu())));
     }
 
-    public Rating rate(Rating rating, List<Double> game) {
+    public Rating rate(Rating rating, Rating opp, double score) {
         rating = scaleDown(rating, RATIO);
 
         double varianceInv = 0;
         double difference = 0;
 
-        double actualScore = game.get(0);
-        Rating opponent = scaleDown(createRating(game.get(1), game.get(2), game.get(3)), RATIO);
+        double actualScore = score;
+        Rating opponent = scaleDown(opp, RATIO);
         double impact = reduceImpact(opponent);
         double expectedScore = expectScore(rating, opponent, impact);
         varianceInv += Math.pow(impact, 2) * expectedScore * (1 - expectedScore);
@@ -175,8 +175,8 @@ public class GlickoCalculator {
                 throw new IllegalArgumentException("Invalid winner: " + winner);
         }
 
-        Rating updatedTeam1 = rate(rating1, Arrays.asList(score1, rating2.getMu(), rating2.getPhi(), rating2.getSigma()));
-        Rating updatedTeam2 = rate(rating2, Arrays.asList(score2, rating1.getMu(), rating1.getPhi(), rating1.getSigma()));
+        Rating updatedTeam1 = rate(rating1, rating2, score1);
+        Rating updatedTeam2 = rate(rating2, rating1, score2);
 
         return new MatchResult(score1, score2, updatedTeam1, updatedTeam2);
     }
